@@ -7,28 +7,68 @@
 
     public Dictionary<string, ICollection<ServiceDescriptor>> ServiceDescriptors { get; }
 
-    public T GetService<T>()
+    public object GetService(Type type)
     {
-        Type type = typeof(T);
-        var descriptor = ServiceDescriptors[type.Name]?.FirstOrDefault();
+        if(!ServiceDescriptors.TryGetValue(type.Name, out var serviceDescriptors))
+        {
+            throw new Exception($"Service {type.Name} has not been registered..");
+        }
+
+        var descriptor = serviceDescriptors.FirstOrDefault();
 
         if (descriptor == null) throw new Exception($"{type.Name} is not registered");
 
-        if (descriptor.ImplementationType != null)
+        //if (descriptor.Implementation != null)
+        //{
+        //    return descriptor.Implementation;
+        //}
+
+        Type implementationType;
+        // if we have registered an interface like <Tservice,TImplementation> then gets its implementation type
+        // from the service descriptor
+        if (type.IsInterface)
         {
-           return (T) descriptor.Implementation ?? (T)Activator.CreateInstance(descriptor.ImplementationType);
+            implementationType = descriptor.ImplementationType;
+        }
+        else
+        {
+            if (type.IsInterface) throw new Exception($"Cannot Instantiate interfaces {type.IsInterface}");
+            implementationType = type;
         }
 
-        if (descriptor.Lifetime == ServiceLifetimes.Transient)
-        {
-            return (T)Activator.CreateInstance(type);
-        }
+        var constructorInfo = implementationType.GetConstructors().First();
+
+        object implementation = null;
+
+        var parameters = constructorInfo.GetParameters().Select(x => GetService(x.ParameterType)).ToArray();
+        implementation = Activator.CreateInstance(implementationType, parameters);
 
         if (descriptor.Lifetime == ServiceLifetimes.Singleton)
         {
-            return (T)descriptor.Implementation;
+            if (descriptor.Implementation == null)
+            {
+                descriptor.Implementation = implementation;
+            }
+            return descriptor.Implementation;
         }
 
-        return (T)descriptor.Implementation;
+        return implementation;
+    }
+
+    public T GetService<T>()
+    {
+        try
+        {
+            Type type = typeof(T);
+
+            return (T)GetService(type);
+
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine(ex.Message);
+            throw ex;
+        }
+
     }
 }

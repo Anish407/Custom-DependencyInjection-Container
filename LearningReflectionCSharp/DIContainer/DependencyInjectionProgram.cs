@@ -10,7 +10,7 @@ var services = new DiServiceCollection();
 services.AddTransient<IDemoService, DemoService>();
 
 //services.AddSingleton<IDemoService, DemoService>();
-//services.AddSingleton<RandomGuidGenerator>();
+services.AddSingleton<RandomGuidGenerator>();
 //services.AddSingleton(new RandomGuidGenerator());
 
 var container = services.Buid();
@@ -21,9 +21,9 @@ var container = services.Buid();
 //Console.WriteLine(service1.NewGuid);
 //Console.WriteLine(service2.NewGuid);
 
-var service1= container.GetService<IDemoService>();
+var service1 = container.GetService<IDemoService>();
 service1.Name = "Test";
-var service2= container.GetService<IDemoService>();
+var service2 = container.GetService<IDemoService>();
 
 service1.DisplayName();
 service2.DisplayName();
