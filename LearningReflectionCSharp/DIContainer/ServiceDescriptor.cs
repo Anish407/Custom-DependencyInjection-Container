@@ -3,19 +3,19 @@
     public Type Type { get; }
     public Type ImplementationType { get; }
 
-    public Object Implementation { get; }
+    public Object Implementation { get; set; }
     public ServiceLifetimes Lifetime { get; }
 
-    public ServiceDescriptor(object implementation, ServiceLifetimes serviceLifetimes)
+    public ServiceDescriptor(Type serviceType, ServiceLifetimes serviceLifetimes)
     {
-        Type = implementation.GetType();
+        Type = serviceType;
         Lifetime = serviceLifetimes;
-        Implementation = implementation;
     }
-    public ServiceDescriptor(Type implementationType, ServiceLifetimes serviceLifetimes, object implementation)
+
+    public ServiceDescriptor(Type serviceType, Type implementationType, ServiceLifetimes serviceLifetimes)
     {
+        Type = serviceType;
         Lifetime = serviceLifetimes;
         ImplementationType = implementationType;
-        Implementation = implementation;
     }
 }
