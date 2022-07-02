@@ -2,24 +2,22 @@
 
 public class DiServiceCollection
 {
-    private IList<ServiceDescriptor> serviceDescriptors = new List<ServiceDescriptor>();
-    public DiServiceCollection()
-    {
-    }
+    private Dictionary<string, ICollection<ServiceDescriptor>> serviceDescriptors = new Dictionary<string, ICollection<ServiceDescriptor>>();
+
 
     public void AddTransient<T>()
     {
-        serviceDescriptors.Add(new ServiceDescriptor(CreateInstance<T>(), ServiceLifetimes.Transient));
+        AddRegistration<T>(ServiceLifetimes.Transient);
     }
 
-    internal void AddSingleton<T>()
+    public void AddSingleton<T>()
     {
-        serviceDescriptors.Add(new ServiceDescriptor(CreateInstance<T>(), ServiceLifetimes.Singleton));
+        AddRegistration<T>(ServiceLifetimes.Singleton);
     }
 
     public void AddSingleton<T>(T service)
     {
-        serviceDescriptors.Add(new ServiceDescriptor(service, ServiceLifetimes.Singleton));
+        AddRegistration<T>(ServiceLifetimes.Singleton, service);
     }
 
     T CreateInstance<T>()
@@ -27,29 +25,28 @@ public class DiServiceCollection
         return Activator.CreateInstance<T>();
     }
 
+    private void AddRegistration<T>(ServiceLifetimes lifetime, object implementation = null)
+    {
+        string serviceName = typeof(T).Name;
+        InsertDescriptorIfNotExists<T>(serviceName, lifetime, implementation);
+    }
+
+    private void AddDescriptor<T>(string serviceName, ServiceLifetimes lifetime, object implementation)
+    {
+        serviceDescriptors.Add(serviceName, new List<ServiceDescriptor> { new ServiceDescriptor(implementation, lifetime) });
+    }
+
+    private void InsertDescriptorIfNotExists<T>(string serviceName, ServiceLifetimes lifetime, object implementation = null)
+    {
+        implementation = implementation ?? CreateInstance<T>();
+        if (serviceDescriptors.TryGetValue(serviceName, out ICollection<ServiceDescriptor> descriptors))
+            descriptors.Add(new ServiceDescriptor(implementation, lifetime));
+        else
+            AddDescriptor<T>(serviceName, lifetime, implementation);
+    }
+
     public DIContainer Buid()
     {
         return new DIContainer(serviceDescriptors);
-    }
-}
-
-public enum ServiceLifetimes
-{
-    Singleton = 1,
-    Transient
-}
-
-public class ServiceDescriptor
-{
-    public Type Type { get; }
-    public Object Implementation { get; }
-    public ServiceLifetimes Lifetime { get; }
-
-    public ServiceDescriptor(object implementation, ServiceLifetimes serviceLifetimes)
-    {
-        Type = implementation.GetType();
-        Lifetime = serviceLifetimes;
-        Implementation = implementation;
-
     }
 }

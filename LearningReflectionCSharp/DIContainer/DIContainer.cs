@@ -1,16 +1,16 @@
 ﻿public class DIContainer
 {
-    public DIContainer(IList<ServiceDescriptor> serviceDescriptors)
+    public DIContainer(Dictionary<string, ICollection<ServiceDescriptor>> serviceDescriptors)
     {
         ServiceDescriptors = serviceDescriptors;
     }
 
-    public IList<ServiceDescriptor> ServiceDescriptors { get; }
+    public Dictionary<string, ICollection<ServiceDescriptor>> ServiceDescriptors { get; }
 
     public T GetService<T>()
     {
         Type type = typeof(T);
-        var descriptor = ServiceDescriptors.SingleOrDefault(x => x.Type == type);
+        var descriptor = ServiceDescriptors[type.Name]?.FirstOrDefault();
 
         if (descriptor == null) throw new Exception($"{type.Name} is not registered");
 
